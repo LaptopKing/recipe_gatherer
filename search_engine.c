@@ -6,47 +6,8 @@ void search();
 
 int main()
 {
-    FILE *fPointer = fopen("filename", "r");
-    char singleLine[150];
-    int size = 0;
-    // Determine size of file
-    while (!feof(fPointer))
-    {
-        size++;
-    }
+    
 
-    char datas[size][150] = read_file(size, fPointer);
-
-    fclose(fPointer);
-
-    return 0;
-}
-
-char** read_file(int size, FILE* fPointer)
-{
-    char datas[size][150];
-    int i = 0;
-    while (!feof(fPointer))
-    {
-        fgets(singleLine, 150, fPointer);
-        for (int k = 0; k < 150; k++)
-        {
-            if (singleLine[k] != '')
-            {
-                break;
-            }
-            else
-            {
-                datas[i][k] = singleLine[k];
-            }
-        }
-    }
-
-    return datas;
-}
-
-void search(char** datas)
-{
     return 0;
 }
 
