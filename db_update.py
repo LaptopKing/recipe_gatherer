@@ -34,7 +34,7 @@ class GetRecipeSites:
         self.page_id = 1
         self.recipes_urls = []
         self.base_url = "https://www.nosalty.hu/receptek?page="
-        self.page_count = 1  # page_count = 476
+        self.page_count = 200  # page_count = 476
 
     def get_urls(self, r):
         remade = clarify(r, '<')
@@ -121,11 +121,10 @@ class GetRecipeData:
 
         # Save each ingredient with a unique ID
         for r in self.recipe_data["ingredients"]:
-            i = int(self.ingredient_ids[len(self.ingredient_ids) - 1])
+            i = int(len(self.ingredient_ids))
             if (r not in self.ingredients):
                 self.ingredient_ids.append(i)
                 self.ingredients.append(str(r))
-                i += 1
 
         return self.recipe_data
 
@@ -163,25 +162,25 @@ class GetRecipeData:
 
         # Sort recipes_urls by text length
         recipes_urls = sorted(self.recipes_urls, key=len)
-
-        u = open("url_index", "w")
-        t = open("temp_db", "a")
-
+        last_recipe_index = i
         # Make requests to the urls from recipes_urls list
-        for k in range(len(recipes_urls) - i):
+        for k in range(len(recipes_urls) - last_recipe_index):
             # Calling get_ingredients function to save
-            data += str(self.get_ingredients(recipes_urls[i], len(recipes_urls), i)) + ';'
+            full_recipe = str(self.get_ingredients(recipes_urls[i], len(recipes_urls) - last_recipe_index, i)) + ";"
+            data += full_recipe
             i += 1
             # Saving current url_index to url_index file
+            u = open("url_index", "w")
             u.write(str(i))
             u.flush()
-            # Appending data to temp_db
-            t.write(str(self.get_ingredients(recipes_urls[i], len(recipes_urls), i)) + ";")
-            t.flush()
-            time.sleep(1)
+            u.close()
 
-        u.close()
-        t.close()
+            # Appending data to temp_db
+            t = open("temp_db", "a")
+            t.write(full_recipe)
+            t.flush()
+            t.close()
+            time.sleep(0.25)
 
         self.recipes = data.split(';')
 
@@ -200,7 +199,7 @@ class GetRecipeData:
         self.recipes.remove(self.recipes[len(self.recipes) - 1])
         for recipe in self.recipes:
             data = json.loads(recipe.replace("'", '"'))
-            w.write(str(data) + "\n")
+            w.write(str(data) + ";")
             w.flush()
             print(data["name"])
         w.close()

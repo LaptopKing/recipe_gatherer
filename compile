@@ -1,0 +1,2 @@
+gcc -o search_engine search_engine.c
+./search_engine
