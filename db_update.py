@@ -34,7 +34,7 @@ class GetRecipeSites:
         self.page_id = 1
         self.recipes_urls = []
         self.base_url = "https://www.nosalty.hu/receptek?page="
-        self.page_count = 200  # page_count = 476
+        self.page_count = 5  # page_count = 476
 
     def get_urls(self, r):
         remade = clarify(r, '<')
@@ -71,23 +71,32 @@ class GetRecipeData:
     def __init__(self, recipes_urls):
         self.recipes_urls = recipes_urls
         self.recipe_datas = []
+        self.recipe_id = 0
         self.recipe_data = {
+            "id": self.recipe_id,
             "name": "",
             "url": "",
             "ingredients": []
         }
-        self.ingredient_ids = []
-        self.ingredients = []
         self.recipes = []
+        
+        self.ingredients_ids = []
+        self.ingredient_id = {
+            "name": "",
+            "ids": []
+        }
+        self.ingredients_pre = []
+        self.ingredients = []
 
     def get_ingredients(self, url, urls_length, i):
-        # print ("Running \"get_ingredients\"...")
         self.recipe_data["name"] = ""
         self.recipe_data["url"] = ""
         self.recipe_data["ingredients"] = []
 
         u = url.split('/')
 
+        self.recipe_id += 1
+        self.recipe_data["id"] = self.recipe_id
         self.recipe_data["name"] = u[4]
         self.recipe_data["url"] = url
 
@@ -112,20 +121,18 @@ class GetRecipeData:
                         temp2 = i.split('/')
 
                         if (temp2[1] == "alapanyag"):
+
+                            ingredient = temp2[2][:-2]
+                            self.ingredients_pre.append(str(ingredient) + ":" + str(self.recipe_id))
+
                             # Checking if ingredient is already added to list
-                            if (temp2[2][:-2] not in self.recipe_data["ingredients"]):
+                            if (ingredient not in self.recipe_data["ingredients"]):
                                 # Append ingredients to recipe_data object by cutting the last three characters down
-                                self.recipe_data["ingredients"].append(temp2[2][:-2])
+                                self.recipe_data["ingredients"].append(ingredient)
+
+        self.ingredients_pre = list(dict.fromkeys(self.ingredients_pre))
 
         self.recipe_data["ingredients"].sort() # Sort list by alphabetical order
-
-        # Save each ingredient with a unique ID
-        for r in self.recipe_data["ingredients"]:
-            i = int(len(self.ingredient_ids))
-            if (r not in self.ingredients):
-                self.ingredient_ids.append(i)
-                self.ingredients.append(str(r))
-
         return self.recipe_data
 
     def run(self):
@@ -140,7 +147,7 @@ class GetRecipeData:
         r.close()
 
         # Dealing with url_index so it won't skip the for loop
-        if (i == len(self.recipes_urls)):
+        if (i >= len(self.recipes_urls)):
 
             # Resetting url_index to 0
             w = open("url_index", "w")
@@ -166,7 +173,7 @@ class GetRecipeData:
         # Make requests to the urls from recipes_urls list
         for k in range(len(recipes_urls) - last_recipe_index):
             # Calling get_ingredients function to save
-            full_recipe = str(self.get_ingredients(recipes_urls[i], len(recipes_urls) - last_recipe_index, i)) + ";"
+            full_recipe = str(self.get_ingredients(recipes_urls[i], len(recipes_urls) - last_recipe_index, i)) + "\n"
             data += full_recipe
             i += 1
             # Saving current url_index to url_index file
@@ -182,7 +189,7 @@ class GetRecipeData:
             t.close()
             time.sleep(0.25)
 
-        self.recipes = data.split(';')
+        self.recipes = data.split('\n')
 
     def update_db(self):
         # Backup system
@@ -197,17 +204,52 @@ class GetRecipeData:
         # Update system
         w = open("nosalty.json", "w")
         self.recipes.remove(self.recipes[len(self.recipes) - 1])
+        # print (self.recipes)
         for recipe in self.recipes:
-            data = json.loads(recipe.replace("'", '"'))
-            w.write(str(data) + ";")
-            w.flush()
-            print(data["name"])
+            if (recipe != ''):
+                data = json.loads(recipe.replace("'", '"'))
+                print (data)
+                w.write(str(data) + "\n")
+                w.flush()
+                # print(data["name"])
         w.close()
 
         # Update ID System
+        i = 0
+        while (i < len(self.ingredients_pre)):
+            temp1 = self.ingredients_pre[i].split(':')
+            save_to = temp1[0] + ":"
+            ids = ""
+            for k in range(len(self.ingredients_pre)):
+                temp2 = self.ingredients_pre[k].split(':')
+                if (temp1[0] == temp2[0]):
+                    ids += temp2[1] + ";"
+            for pre in self.ingredients_pre:
+                temp3 = pre.split(':')
+                if (temp1[0] == temp3[0]):
+                    self.ingredients_pre.remove(pre)
+            save_to += ids[:-1]
+            self.ingredients.append(save_to)
+            i += 1
+
+        self.ingredients.sort()
+
         w = open("ingredients_ids", "w")
-        for i in range(len(self.ingredients)):
-            w.write(self.ingredients[i] + ":" + str(self.ingredient_ids[i]) + "\n")
+        for i in self.ingredients:
+            w.write(i + "\n")
+            w.flush()
+        w.close()
+
+        # Sorting ingredients_ids to be in proper form for the search engine
+        ingredients = []
+        r = open("ingredients_ids", "r")
+        ingredients = r.readlines()
+        r.close()
+        ingredients.sort()
+
+        w = open("ingredients_ids", "w")
+        for i in ingredients:
+            w.write(i)
             w.flush()
         w.close()
 
