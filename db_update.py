@@ -34,7 +34,7 @@ class GetRecipeSites:
         self.page_id = 1
         self.recipes_urls = []
         self.base_url = "https://www.nosalty.hu/receptek?page="
-        self.page_count = 5  # page_count = 476
+        self.page_count = 476  # page_count = 476
 
     def get_urls(self, r):
         remade = clarify(r, '<')
@@ -96,7 +96,7 @@ class GetRecipeData:
         u = url.split('/')
 
         self.recipe_id += 1
-        self.recipe_data["id"] = self.recipe_id
+        self.recipe_data["id"] = i + 1
         self.recipe_data["name"] = u[4]
         self.recipe_data["url"] = url
 
