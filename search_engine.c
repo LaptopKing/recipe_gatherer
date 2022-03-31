@@ -2,6 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RECIPE_ROWS 10000
+#define RECIPE_COLS 2000
+
+int recipe_ids[RECIPE_ROWS];
+char recipe_names[RECIPE_ROWS][RECIPE_COLS];
+char recipe_urls[RECIPE_ROWS][RECIPE_COLS];
+char recipe_ingredients[RECIPE_ROWS][RECIPE_COLS];
+int recipe_ids_check[RECIPE_ROWS];
+
+
 int main(int argc, char* argv[])
 {
     if (argc == 1)
@@ -12,7 +22,7 @@ int main(int argc, char* argv[])
 
     FILE *fp = fopen("ingredients_ids", "r");
     
-    int buffer = 5000;
+    int buffer = 1900;
     char temp[buffer];
     int temp_max = 0;
     
@@ -142,7 +152,6 @@ int main(int argc, char* argv[])
 
     int needed_ids[max_length];
     int counter = 0;
-    int temp3[max_length];
     // char alphabetic_order = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k', 'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 
     for (i = 0; i < rows; i++)
@@ -166,17 +175,19 @@ int main(int argc, char* argv[])
         }
     }
 
+
+
     int recipe_rows;
     int recipe_cols;
-    int recipe_buffer = 1000;
-    char recipe_temp[recipe_buffer];
+    // int recipe_buffer = 1900;
+    char recipe_temp[buffer];    
     int recipe_temp_max = 0;
 
-    FILE *fp2 = fopen("nosalty.json", "r");
-    while (fgets(recipe_temp, recipe_buffer, fp2))
+    fp = fopen("nosalty.json", "r");
+    while (fgets(recipe_temp, buffer, fp))
     {
         recipe_rows++;
-        for (i = 0; i < recipe_buffer; i++)
+        for (i = 0; i < buffer; i++)
         {
             if (recipe_temp[i] != '\0')
             {
@@ -197,37 +208,38 @@ int main(int argc, char* argv[])
             recipe_temp_max = 0;
         }
     }
-    fseek(fp2, 0, SEEK_SET);
-
-    int recipe_ids[recipe_rows];
-    char recipe_names[recipe_rows][recipe_cols];
-    char recipe_urls[recipe_rows][recipe_cols];
-    char recipe_ingredients[recipe_rows][recipe_cols];
+    fseek(fp, 0, SEEK_SET);
 
     for (i = 0; i < recipe_rows; i++)
     {
-        fgets(recipe_temp, recipe_cols, fp2);
-        int k = 0;
+        fgets(recipe_temp, recipe_cols, fp);
+        int k = 7;
+        int j = 0;
 
         // get ids
-        char id[6];
+        char id[5];
         while (recipe_temp[k] != ',')
         {
-            id[k] = recipe_temp[k];
+            id[j] = recipe_temp[k];
             k++;
+            j++;
         }
         recipe_ids[i] = atoi(id);
+        j = 0;
+        // printf ("%d\n", recipe_ids[i]);
 
         // get names
-        char name[recipe_cols];        
-        int j = 0;
+        char name[1900];        
+        
         int col = 0;
 
         while (recipe_temp[k] != ':')
         {
+            // printf ("%c", recipe_temp[k]);
             k++;
         }
-        k += 2;
+        k += 3;
+        // printf ("%c", recipe_temp[k]);
         while (recipe_temp[k] != '\'')
         {
             name[j] = recipe_temp[k];
@@ -243,7 +255,6 @@ int main(int argc, char* argv[])
             }
             else
             {
-                recipe_names[i][col] = '\0';
                 break;
             }
         }
@@ -251,13 +262,13 @@ int main(int argc, char* argv[])
         j = 0;
 
         // get urls
-        char url[recipe_cols];
+        char url[1900];
 
         while (recipe_temp[k] != ':')
         {
             k++;
         }
-        k += 2;
+        k += 3;
         while(recipe_temp[k] != '\'')
         {
             url[j] = recipe_temp[k];
@@ -273,7 +284,6 @@ int main(int argc, char* argv[])
             }
             else
             {
-                recipe_urls[i][col] = '\0';
                 break;
             }
         }
@@ -281,13 +291,13 @@ int main(int argc, char* argv[])
         j = 0;
 
         // get ingredients
-        char ingredient_name[recipe_cols];
+        char ingredient_name[1900];
 
         while (recipe_temp[k] != ':')
         {
             k++;
         }
-        k += 2;
+        k += 3;
         while(recipe_temp[k] != ']')
         {
             ingredient_name[j] = recipe_temp[k];
@@ -303,21 +313,21 @@ int main(int argc, char* argv[])
             }
             else
             {
+                recipe_ingredients[i][col - 1] = '\0';
                 recipe_ingredients[i][col] = '\0';
+                // printf ("%s\n", recipe_ingredients[i]);
                 break;
             }
         }
     }
-
 /*
-    printf ("\n");
-    for (i = 0; i < rows; i++)
+    for (i = 0; i < recipe_rows; i++)
     {
-        printf ("\n%d. %s:\n\tRecipe Url: %s\n\tRecipe ingredients: %s\n\n", recipe_ids[i], recipe_names[i], recipe_urls[i], recipe_ingredients[i]);
+        printf ("\n%d. %s:\n\tRecipe Url: %s\n\tRecipe ingredients: %s\n", recipe_ids[i], recipe_names[i], recipe_urls[i], recipe_ingredients[i]);
     }
 */
-
-/*
+    int g = 0;
+    int check = 0;
     printf ("\n");
     for (i = 1; i < argc; i++)
     {
@@ -326,14 +336,26 @@ int main(int argc, char* argv[])
     printf ("\n");
     for (i = 0; i < counter; i++)
     {
-        if (needed_ids[i] != 0)
+        for (int f = 0; f < counter; f++)
         {
-            printf ("%d ", needed_ids[i]);
+            if (recipe_ids_check[f] == recipe_ids[needed_ids[i] - 1])
+            {
+                check = 1;
+            }
+        }
+        if (check != 1)
+        {
+            if (needed_ids[i] != 0)
+            {
+                printf ("\n%s:\n\tRecipe Url: %s\n\tRecipe ingredients: %s\n", recipe_names[needed_ids[i] - 1], recipe_urls[needed_ids[i] - 1], recipe_ingredients[needed_ids[i] - 1]);
+                recipe_ids_check[g] = recipe_ids[needed_ids[i] - 1];
+               g++;
+               check = 0;
+            }
         }
     }
     printf ("\n");
-*/
 
-  
+
     return 0;
 }

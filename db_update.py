@@ -95,7 +95,7 @@ class GetRecipeData:
 
         u = url.split('/')
 
-        self.recipe_id += 1
+        self.recipe_id = i + 1
         self.recipe_data["id"] = i + 1
         self.recipe_data["name"] = u[4]
         self.recipe_data["url"] = url
@@ -192,6 +192,7 @@ class GetRecipeData:
         self.recipes = data.split('\n')
 
     def update_db(self):
+        i = 0
         # Backup system
         r = open("nosalty.json", "r")
         backup = r.readlines()
@@ -215,7 +216,6 @@ class GetRecipeData:
         w.close()
 
         # Update ID System
-        i = 0
         while (i < len(self.ingredients_pre)):
             temp1 = self.ingredients_pre[i].split(':')
             save_to = temp1[0] + ":"
@@ -231,6 +231,7 @@ class GetRecipeData:
             save_to += ids[:-1]
             self.ingredients.append(save_to)
             i += 1
+
 
         self.ingredients.sort()
 
@@ -251,7 +252,6 @@ class GetRecipeData:
         for i in ingredients:
             w.write(i)
             w.flush()
-        w.close()
 
 
 print(f"Program started at {begin}\n")

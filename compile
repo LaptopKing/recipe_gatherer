@@ -1,2 +1,4 @@
+# ulimit -s 32784 
 gcc -o search_engine search_engine.c
 ./search_engine
+# ulimit -s 8196
