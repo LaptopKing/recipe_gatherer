@@ -136,6 +136,8 @@ class GetRecipeData:
         return self.recipe_data
 
     def run(self):
+        check_requests = 0
+
         # Reading saved ingredients list into data
         d = open("temp_db", "r")
         data = d.read()
@@ -172,6 +174,11 @@ class GetRecipeData:
         last_recipe_index = i
         # Make requests to the urls from recipes_urls list
         for k in range(len(recipes_urls) - last_recipe_index):
+            if (check_requests < 750):
+                check_requests += 1
+            else:
+                time.sleep(60)
+                check_requests = 0
             # Calling get_ingredients function to save
             full_recipe = str(self.get_ingredients(recipes_urls[i], len(recipes_urls) - last_recipe_index, i)) + "\n"
             data += full_recipe

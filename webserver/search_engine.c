@@ -3,13 +3,7 @@
 #include <string.h>
 
 #define RECIPE_ROWS 10000
-#define RECIPE_COLS 2000
-
-int recipe_ids[RECIPE_ROWS];
-char recipe_names[RECIPE_ROWS][RECIPE_COLS];
-char recipe_urls[RECIPE_ROWS][RECIPE_COLS];
-char recipe_ingredients[RECIPE_ROWS][RECIPE_COLS];
-int recipe_ids_check[RECIPE_ROWS];
+#define RECIPE_COLS 35000
 
 
 int main(int argc, char* argv[])
@@ -19,30 +13,29 @@ int main(int argc, char* argv[])
         printf ("You did not specify at least 1 or more ingredients!\nExiting program...\n");
         exit(0);
     }
-
+    
     FILE *fp = fopen("ingredients_ids.static", "r");
     
-    int buffer = 1900;
-    char temp[buffer];
+    char *temp;
+    temp = malloc(sizeof(char)*RECIPE_COLS);
     int temp_max = 0;
     
     int rows = 0;
     int max_length = 0;
 
     // Get number of rows and the maximum length needed for the longest string
-    while (fgets(temp, buffer, fp))
+    while (fgets(temp, RECIPE_COLS, fp))
     {
         rows++;
-        for (int i = 0; i < buffer; i++)
+        for (int i = 0; i < RECIPE_COLS; i++)
         {
-            if (temp[i] != '\0')
+            if (temp[i] != '\n' && temp[i] != '\0')
             {
                 // printf ("%c", temp[i]);
                 temp_max++;
             }
             else
             {
-                // printf ("%d\n", temp_max);
                 break;
             }
         }
@@ -58,8 +51,20 @@ int main(int argc, char* argv[])
         }
     }
     fseek(fp, 0, SEEK_SET);
+    free(temp);
+
+    char **data = malloc(rows * sizeof(char *));
+    for (int i = 0; i < rows; i++)
+    {
+        data[i] = (char*)malloc(max_length);
+    }
     
-    char data[rows][max_length];
+    int max_line_length = 0;
+    int temp_max_line_length = 0;
+
+    int max_ids_length = 0;
+    int temp_max_ids_length = 0;
+
     char line[max_length];
     int i = 0;
 
@@ -68,7 +73,12 @@ int main(int argc, char* argv[])
         fgets(line, max_length, fp);
         for (int k = 0; k < max_length; k++)
         {
-            if (line[k] == '\0')
+            if (line[k] == ';')
+            {
+                temp_max_ids_length++;
+            }
+
+            if (line[k] != '\0')
             {
                 data[i][k] = line[k];
             }
@@ -77,15 +87,44 @@ int main(int argc, char* argv[])
                 data[i][k] = line[k];
             }
         }
-        
+        temp_max_line_length = 0;
+        int d = 0;
+        while (line[d] != ':')
+        {
+            temp_max_line_length++;
+            d++;
+        }
+        d++;
+
+        if (max_ids_length < temp_max_ids_length + 3)
+        {
+            max_ids_length = temp_max_ids_length + 3;
+        }
+
+        if (max_line_length < temp_max_line_length)
+        {
+            max_line_length = temp_max_line_length;
+        }
+        temp_max_ids_length = 0;
     }
 
     fclose(fp);
 
-    char ingredient_names[rows][max_length];
-    int splitted_ids[rows][max_length];
+    char **ingredient_names = malloc(rows * sizeof(char *));
+    for (int i = 0; i < rows; i++)
+    {
+        ingredient_names[i] = (char*)malloc(max_line_length);
+    }
 
-    char ids[rows][max_length];
+    int *splitted_ids[rows];
+    char **ids = malloc(rows * sizeof(char *));
+
+    for (int i = 0; i < rows; i++)
+    {
+        ids[i] = (char*)malloc(max_length);
+        splitted_ids[i] = (int*)malloc(max_ids_length * sizeof(int));
+    }
+
     char separator = ':';
     int checker = 0;
 
@@ -150,9 +189,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    int needed_ids[max_length];
+    int needed_ids[max_ids_length];
     int counter = 0;
-    // char alphabetic_order = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'k', 'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 
     for (i = 0; i < rows; i++)
     {
@@ -160,34 +198,30 @@ int main(int argc, char* argv[])
         {
             if (strcmp(ingredient_names[i], argv[k]) == 0)
             {
-                for (int j = 0; j < max_length; j++)
+                for (int j = 0; j < max_ids_length; j++)
                 {
-                    if (splitted_ids[i][j] != 0)
+                    if (splitted_ids[i][j] != 0 && splitted_ids[i][j] != needed_ids[counter])
                     {
-                        if (splitted_ids[i][j] != needed_ids[counter])
-                        {
-                            needed_ids[counter] = splitted_ids[i][j];
-                            counter++;
-                        }
+                        needed_ids[counter] = splitted_ids[i][j];
+                        counter++;
                     }
                 }
             }
         }
     }
 
-
-
     int recipe_rows;
     int recipe_cols;
     // int recipe_buffer = 1900;
-    char recipe_temp[buffer];    
+    char *recipe_temp;
+    recipe_temp = malloc(RECIPE_COLS * sizeof(char));    
     int recipe_temp_max = 0;
 
     fp = fopen("nosalty.json.static", "r");
-    while (fgets(recipe_temp, buffer, fp))
+    while (fgets(recipe_temp, RECIPE_COLS, fp))
     {
         recipe_rows++;
-        for (i = 0; i < buffer; i++)
+        for (i = 0; i < RECIPE_COLS; i++)
         {
             if (recipe_temp[i] != '\0')
             {
@@ -210,13 +244,30 @@ int main(int argc, char* argv[])
     }
     fseek(fp, 0, SEEK_SET);
 
+    int recipe_ids[recipe_rows];
+    char **recipe_names = malloc(recipe_rows * sizeof(char *));
+    for (int i = 0; i < recipe_rows; i++)
+    {
+        recipe_names[i] = (char*)malloc(recipe_cols);
+    }
+    char **recipe_urls = malloc(recipe_rows * sizeof(char *));
+    for (int i = 0; i < recipe_rows; i++)
+    {
+        recipe_urls[i] = (char*)malloc(recipe_cols);
+    }
+    char **recipe_ingredients = malloc(recipe_rows * sizeof(char *));
+    for (int i = 0; i < recipe_rows; i++)
+    {
+        recipe_ingredients[i] = (char*)malloc(recipe_cols);
+    }
+    int recipe_ids_check[recipe_rows];
+
     for (i = 0; i < recipe_rows; i++)
     {
         fgets(recipe_temp, recipe_cols, fp);
         int k = 7;
         int j = 0;
 
-        // get ids
         char id[5];
         while (recipe_temp[k] != ',')
         {
@@ -287,6 +338,7 @@ int main(int argc, char* argv[])
                 break;
             }
         }
+
         col = 0;
         j = 0;
 
@@ -304,36 +356,47 @@ int main(int argc, char* argv[])
             j++;
             k++;
         }
+        int count_quotes = 0;
         for (int g = 0; g < recipe_cols; g++)
         {
             if (ingredient_name[g] != '\0')
             {
-                recipe_ingredients[i][col] = ingredient_name[g];
-                col++;
+                if (ingredient_name[g] == '\'' && count_quotes < 2)
+                {
+                    recipe_ingredients[i][col] = ingredient_name[g];
+                    col++;
+                    count_quotes++;
+                }
+                else if (count_quotes == 2)
+                {
+                    if (ingredient_name[g] == ',')
+                    {
+                        recipe_ingredients[i][col] = ingredient_name[g];
+                        col++;
+                        count_quotes = 0;
+                    }
+                }
+                else
+                {
+                    recipe_ingredients[i][col] = ingredient_name[g];
+                    col++;
+                }
             }
             else
             {
-                recipe_ingredients[i][col - 1] = '\0';
+                recipe_ingredients[i][col - 1] = '\'';
                 recipe_ingredients[i][col] = '\0';
                 // printf ("%s\n", recipe_ingredients[i]);
                 break;
             }
         }
     }
-/*
-    for (i = 0; i < recipe_rows; i++)
-    {
-        printf ("\n%d. %s:\n\tRecipe Url: %s\n\tRecipe ingredients: %s\n", recipe_ids[i], recipe_names[i], recipe_urls[i], recipe_ingredients[i]);
-    }
-*/
+
+    free(recipe_temp);
+
     int g = 0;
     int check = 0;
-    printf ("\n");
-    for (i = 1; i < argc; i++)
-    {
-        printf ("%s\n", argv[i]);
-    }
-    printf ("\n");
+
     for (i = 0; i < counter; i++)
     {
         for (int f = 0; f < counter; f++)
@@ -347,15 +410,13 @@ int main(int argc, char* argv[])
         {
             if (needed_ids[i] != 0)
             {
-                printf ("\n%s:\n\tRecipe Url: %s\n\tRecipe ingredients: %s\n", recipe_names[needed_ids[i] - 1], recipe_urls[needed_ids[i] - 1], recipe_ingredients[needed_ids[i] - 1]);
+                printf ("{\"name\":\"%s\", \"recipe_url\":\"%s\", \"recipe_ingredients\":[%s]}\n", recipe_names[needed_ids[i] - 1], recipe_urls[needed_ids[i] - 1], recipe_ingredients[needed_ids[i] - 1]);
                 recipe_ids_check[g] = recipe_ids[needed_ids[i] - 1];
-               g++;
-               check = 0;
+                g++;
+                check = 0;
             }
         }
     }
-    printf ("\n");
-
 
     return 0;
 }
