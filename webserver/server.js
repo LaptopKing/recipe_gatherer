@@ -31,13 +31,18 @@ run("./search_engine", function(data_to_process, j_container, counter) {
 
 		}
 	}
-	console.log(counter);
-	if (counter == 12) {
+	if (counter == 12)
+	{
 		setTimeout(function run_web_server () {
 			var data = '<!DOCTYPE html> <html> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Recipe Gatherer</title> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"> </head> <body> <div class="container"> <table class="table table-hover table-dark"> <thead> <tr> <th class="h3 font-weight-bold">Recipe Name</th> <th class="h3 font-weight-bold">Ingredients</th> <th class="h3 font-weight-bold">Recipe Url</th> </tr> </thead> <tbody>';
 			for (let i = 0; i < j_container.length; i++)
 			{
-				data += '<tr><td class="p-3 h5">' + j_container[i].name.replaceAll('-', ' ').replace(j_container[i].name[0], j_container[i].name[0].toUpperCase()) + '</td><td>' + j_container[i].recipe_ingredients.toString().replaceAll(',', ', ') + '</td><td class="p-3"><a class="text-light" href="' + j_container[i].recipe_url + '">' + j_container[i].recipe_url + '</a> </td></tr>';
+				try {
+					data += '<tr><td class="p-3 h5">' + j_container[i].name.replaceAll('-', ' ').replace(j_container[i].name[0], j_container[i].name[0].toUpperCase()) + '</td><td>' + j_container[i].recipe_ingredients.toString().replaceAll(',', ', ') + '</td><td class="p-3"><a class="text-light" href="' + j_container[i].recipe_url + '">' + j_container[i].recipe_url + '</a> </td></tr>';
+				}
+				catch {
+					
+				}
 			}
 			data += '</tbody> </table> </div> </body> </html>';
 
@@ -49,7 +54,7 @@ run("./search_engine", function(data_to_process, j_container, counter) {
 			server.listen(5000);
 
 			console.log('Node.js web server at address http://127.0.0.1:5000 is running..')
-		}, 5000);
+		}, 1000);
 	}
 });
 
